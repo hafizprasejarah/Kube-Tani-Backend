@@ -1,10 +1,11 @@
 import { ResponseError } from "../error/response_error.js";
 import { validate } from "../validation/validation.js";
-import { registerValidation, loginValidation } from "../validation/user_validation.js";
+import { registerValidation, loginValidation, getUserValidation } from "../validation/user_validation.js";
 import { prismaClient } from "../application/database.js";
 import bcrypt from 'bcrypt';
 import { generateToken } from "../utils/jwt.js";
 import { id } from "zod/v4/locales";
+import { PrismaClient } from "@prisma/client";
 
 const register = async (request) => {
     const user = validate(registerValidation, request);
@@ -99,8 +100,25 @@ const login = async (request) => {
 
 }
 
-const get = async (request) => {
+const get = async (username) => {
+    username = validate(getUserValidation, username);
 
+    const user = await prismaClient.user.findUnique({
+        where:
+        {
+            username: username
+        },
+        select: {
+            username: true,
+            name: true
+        }
+    });
+
+    if (!user) {
+        throw new ResponseError(404, "User not found");
+    }
+
+    return user;
 }
 
-export default { register, login };
+export default { register, login, get };

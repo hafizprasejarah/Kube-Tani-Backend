@@ -14,4 +14,4 @@ const loginValidation = z.object({
 
 const getUserValidation = z.string().max(100);
 
-export { registerValidation, loginValidation }
+export { registerValidation, loginValidation, getUserValidation }

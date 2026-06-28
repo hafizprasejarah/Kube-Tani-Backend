@@ -6,12 +6,8 @@ const userRouter = new express.Router();
 userRouter.use(authMiddleware);
 
 userRouter.get('/api/users/current', userController.get);
-userRouter.patch('/api/users/current', userController.update);
-userRouter.delete('/api/users/logout', userController.logout);
-
-userRouter.post('/api/users', userController.register);
-userRouter.post('/api/users/login', userController.login);
-
+// userRouter.patch('/api/users/current', userController.update);
+// userRouter.delete('/api/users/logout', userController.logout);
 
 export {
     userRouter
