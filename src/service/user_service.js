@@ -3,7 +3,7 @@ import { validate } from "../validation/validation.js";
 import { registerValidation, loginValidation } from "../validation/user_validation.js";
 import { prismaClient } from "../application/database.js";
 import bcrypt from 'bcrypt';
-import { generateToken, verifyToken } from "../utils/jwt.js";
+import { generateToken } from "../utils/jwt.js";
 import { id } from "zod/v4/locales";
 
 const register = async (request) => {

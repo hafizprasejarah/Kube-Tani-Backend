@@ -1,20 +1,17 @@
 import { ResponseError } from "../error/response_error.js";
 
 const errorMiddleware = async (err, req, res, next) => {
-    if (!err) {
-        next();
-        return;
-    }
-    
     if (err instanceof ResponseError) {
-        res.status(err.status).json({
+        return res.status(err.status).json({
             errors: err.message
-        }).end();
+        })
 
     } else {
-        res.status(500).json({
-            errors: err.message
-        }).end();
+        console.error(err)
+
+        return res.status(500).json({
+            errors: "Internal Server Error"
+        })
     }
 }
 
