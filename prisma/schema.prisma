@@ -18,14 +18,28 @@ model User {
   username  String   @unique
   email     String   @unique
   password  String
-  role      Role     @default(PENDING)
+  role      Role     @default(USER)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum Role {
-  SUPER_ADMIN
   ADMIN
-  PENDING
+  USER
 }

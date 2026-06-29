@@ -21,6 +21,7 @@ const login = async (req, res, next) => {
             message: result.message,
             data: {
                 accessToken: result.accessToken,
+                refreshToken: result.refreshToken,
                 user: result.user
             }
         })
@@ -29,11 +30,27 @@ const login = async (req, res, next) => {
     }
 }
 
+const refresh = async (req, res, next) => {
+    try {
+
+        const result = await userService.refresh(req.body);
+
+        return res.status(200).json({
+            message: result.message,
+            data: {
+                accessToken: result.accessToken
+            }
+        });
+
+    } catch (e) {
+        next(e);
+    }
+};
 
 const get = async (req, res, next) => {
     try {
-        const username = req.user.username;
-        const result = await userService.get(username);
+        const id = req.user.id;
+        const result = await userService.get(id);
 
         res.status(200).json({
             data: result
@@ -45,4 +62,33 @@ const get = async (req, res, next) => {
 
 }
 
-export default { register, login, get };
+const update = async (req, res, next) => {
+    try {
+        const id = req.user.id;
+        const request = req.body;
+
+        const result = await userService.update(id, request);
+        res.status(200).json({
+            data: result
+        });
+
+    } catch (e) {
+        next(e);
+    }
+}
+
+const logout = async (req, res, next) => {
+    try {
+
+        await userService.logout(req.body.refreshToken);
+
+        res.status(200).json({
+            data: "ok"
+        });
+        
+    } catch (e) {
+        next(e);
+    }
+}
+
+export default { register, login, get, update, logout, refresh };

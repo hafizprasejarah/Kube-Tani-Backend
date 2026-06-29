@@ -1,11 +1,13 @@
 import { ResponseError } from "../error/response_error.js";
 import { validate } from "../validation/validation.js";
-import { registerValidation, loginValidation, getUserValidation } from "../validation/user_validation.js";
+import { registerValidation, loginValidation, getUserValidation, updateUserValidation, refreshTokenValidation } from "../validation/user_validation.js";
 import { prismaClient } from "../application/database.js";
 import bcrypt from 'bcrypt';
-import { generateToken } from "../utils/jwt.js";
-import { id } from "zod/v4/locales";
-import { PrismaClient } from "@prisma/client";
+import {
+    generateRefreshToken,
+    generateAccessToken,
+    verifyRefreshToken
+} from "../utils/jwt.js";
 
 const register = async (request) => {
     const user = validate(registerValidation, request);
@@ -22,6 +24,7 @@ const register = async (request) => {
             ]
         }
     });
+
     if (countUser > 0) {
         throw new ResponseError(400, "username or email already exists");
     }
@@ -31,11 +34,13 @@ const register = async (request) => {
         10
     );
 
-    return await prismaClient.user.create({
-        message: "Registrasi berhasil. Akun Anda sedang menunggu persetujuan Super Admin",
+    const createdUser = await prismaClient.user.create({
         data: {
-            ...user,
+            name: user.name,
+            username: user.username,
+            email: user.email,
             password: hashedPassword,
+            role: "USER"
         },
         select: {
             email: true,
@@ -44,6 +49,11 @@ const register = async (request) => {
             role: true,
         }
     });
+
+    return {
+        message: "Register succesfull",
+        data: createdUser
+    }
 
 }
 
@@ -59,7 +69,8 @@ const login = async (request) => {
             username: true,
             email: true,
             password: true,
-            role: true
+            role: true,
+            isActive: true
         }
     });
 
@@ -73,22 +84,35 @@ const login = async (request) => {
         throw new ResponseError(401, "Username or password is incorrect");
     }
 
-    if (user.role === "PENDING") {
-        throw new ResponseError(
-            403,
-            "Akun Anda masih menunggu persetujuan Super Admin."
-        );
+    if (!user.isActive) {
+        throw new ResponseError(403, "Account is inactive");
     }
 
-    const token = generateToken({
+    const accessToken = generateAccessToken({
         id: user.id,
         role: user.role,
         username: user.username
     });
 
+    const refreshToken = generateRefreshToken({
+        id: user.id
+    })
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await prismaClient.refreshToken.create({
+        data: {
+            token: refreshToken,
+            expiresAt: expiresAt,
+            userId: user.id
+        }
+    });
+
     return {
         message: "Login berhasil",
-        accessToken: token,
+        accessToken,
+        refreshToken,
         user: {
             id: user.id,
             name: user.name,
@@ -97,20 +121,66 @@ const login = async (request) => {
             role: user.role
         }
     };
-
 }
 
-const get = async (username) => {
-    username = validate(getUserValidation, username);
+const refresh = async (request) => {
+
+    const tokenRefresh = validate(refreshTokenValidation, request);
+
+    verifyRefreshToken(tokenRefresh.refreshToken);
+
+    const token = await prismaClient.refreshToken.findUnique({
+        where: {
+            token: tokenRefresh.refreshToken
+        },
+        include: {
+            user: true
+        }
+    });
+
+    if (!token) {
+        throw new ResponseError(401, "Refresh token is invalid");
+    }
+
+    if (token.revoked) {
+        throw new ResponseError(401, "Refresh token has been revoked");
+    }
+
+    if (token.expiresAt < new Date()) {
+        throw new ResponseError(401, "Refresh token expired");
+    }
+
+    if (!token.user.isActive) {
+        throw new ResponseError(403, "Account is inactive");
+    }
+
+    const accessToken = generateAccessToken({
+        id: token.user.id,
+        username: token.user.username,
+        role: token.user.role
+    });
+
+    return {
+        message: "Access token refreshed",
+        accessToken
+    };
+}
+
+
+const get = async (id) => {
+    id = validate(getUserValidation, id);
 
     const user = await prismaClient.user.findUnique({
         where:
         {
-            username: username
+            id: id
         },
         select: {
+            id: true,
             username: true,
-            name: true
+            email: true,
+            name: true,
+            role: true
         }
     });
 
@@ -121,4 +191,114 @@ const get = async (username) => {
     return user;
 }
 
-export default { register, login, get };
+const update = async (id, request) => {
+    const user = validate(updateUserValidation, request);
+
+    const existUsers = await prismaClient.user.findUnique({
+        where: {
+            id: id
+        }
+    });
+
+    if (!existUsers) {
+        throw new ResponseError(404, "User not found");
+    }
+
+    const data = {};
+
+    if (user.name) {
+        data.name = user.name;
+    }
+
+    if (user.username) {
+
+        const existUsername = await prismaClient.user.findFirst({
+            where: {
+                username: user.username,
+                NOT: {
+                    id: id
+                }
+            }
+        })
+
+        if (existUsername) {
+            throw new ResponseError(400, "username already exists");
+        }
+
+        data.username = user.username;
+    }
+
+
+    if (user.email) {
+
+        const existemail = await prismaClient.user.findFirst({
+            where: {
+                email: user.email,
+                NOT: {
+                    id: id
+                }
+            }
+        })
+
+        if (existemail) {
+            throw new ResponseError(400, "email already exists");
+        }
+
+        data.email = user.email;
+    }
+
+    if (user.password) {
+        data.password = await bcrypt.hash(user.password, 10);
+    }
+
+    if (Object.keys(data).length === 0) {
+        throw new ResponseError(400, "No data to update");
+    }
+
+    return await prismaClient.user.update({
+        where: {
+            id: id
+        },
+        data: data,
+        select: {
+            username: true,
+            name: true
+        }
+    });
+}
+
+const logout = async (request) => {
+    request = validate(getUserValidation, request);
+
+    const token = await prismaClient.refreshToken.findUnique({
+        where: {
+            token: request
+        }
+    });
+
+    if (!token) {
+        throw new ResponseError(404, "Refresh Token not found");
+    }
+
+    await prismaClient.refreshToken.delete({
+        where: {
+            token: request
+        }
+    })
+
+    return {
+        message: "Logout successful"
+    };
+}
+
+const getAll = async (request) => {
+    const users = validate(getUserValidation, request);
+
+    const getAll = prismaClient.user.findMany({
+
+    })
+}
+
+
+
+export default { register, login, get, update, logout, refresh };

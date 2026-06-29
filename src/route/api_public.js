@@ -3,8 +3,9 @@ import userController from '../controller/user_controller.js';
 
 
 const publicRouter = new express.Router();
-publicRouter.post('/api/users',userController.register);
-publicRouter.post('/api/users/login',userController.login);
+publicRouter.post('/api/users', userController.register);
+publicRouter.post('/api/users/login', userController.login);
+publicRouter.post("/api/auth/refresh", userController.refresh);
 
 
 export {

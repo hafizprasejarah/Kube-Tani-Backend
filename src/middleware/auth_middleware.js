@@ -1,4 +1,4 @@
-import { verifyToken } from "../utils/jwt.js";
+import { verifyAccessToken, verifyToken } from "../utils/jwt.js";
 
 export const authMiddleware = async (req, res, next) => {
 
@@ -12,7 +12,7 @@ export const authMiddleware = async (req, res, next) => {
         }
 
         const token = authorization.substring(7)
-        const user = verifyToken(token);
+        const user = verifyAccessToken(token);
 
         req.user = user;
 
