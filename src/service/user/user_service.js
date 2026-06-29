@@ -16,8 +16,8 @@ const get = async (id) => {
         select: {
             id: true,
             username: true,
-            email: true,
             name: true,
+            email: true,
             role: true
         }
     });
@@ -104,6 +104,7 @@ const update = async (id, request) => {
             email: true,
             role: true
         }
+        
     });
 }
 

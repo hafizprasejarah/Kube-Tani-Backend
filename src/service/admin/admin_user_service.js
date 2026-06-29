@@ -15,8 +15,8 @@ const get = async (id) => {
         select: {
             id: true,
             username: true,
-            email: true,
             name: true,
+            email: true,
             role: true
         }
     });
@@ -99,7 +99,9 @@ const update = async (id, request) => {
         data: data,
         select: {
             username: true,
-            name: true
+            name: true,
+            email: true,
+            role: true
         }
     });
 }
@@ -200,4 +202,4 @@ const getAllUsers = async (request) => {
 
 // }
 
-export default {get, update, logout };
+export default { get, update, logout };

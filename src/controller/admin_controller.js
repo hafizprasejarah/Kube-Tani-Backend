@@ -1,5 +1,5 @@
 
-import adminUserService  from "../service/admin/user_service.js";
+import adminUserService  from "../service/admin/admin_user_service.js";
 
 const get = async (req, res, next) => {
     try {
