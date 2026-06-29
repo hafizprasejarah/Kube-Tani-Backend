@@ -12,7 +12,7 @@ const loginValidation = z.object({
     password: z.string().min(8).max(100),
 });
 
-const getUserValidation = z.string().min(1);
+const getUserValidation = z.number().int().positive();
 
 const updateUserValidation = z.object({
     email: z.string().email().optional(),
@@ -21,7 +21,7 @@ const updateUserValidation = z.object({
     name: z.string().min(2).max(100).optional(),
 });
 
-export const refreshTokenValidation = z.object({
+const refreshTokenValidation = z.object({
     refreshToken: z.string().min(1)
 });
 

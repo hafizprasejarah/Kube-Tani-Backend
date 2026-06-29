@@ -1,4 +1,4 @@
-import { verifyAccessToken, verifyToken } from "../utils/jwt.js";
+import { verifyAccessToken } from "../utils/jwt.js";
 
 export const authMiddleware = async (req, res, next) => {
 

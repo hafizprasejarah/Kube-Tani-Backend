@@ -7,7 +7,6 @@ publicRouter.post('/api/users', userController.register);
 publicRouter.post('/api/users/login', userController.login);
 publicRouter.post("/api/auth/refresh", userController.refresh);
 
-
 export {
     publicRouter
 };

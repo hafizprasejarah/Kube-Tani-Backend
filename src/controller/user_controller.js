@@ -1,9 +1,10 @@
-import userService from "../service/user_service.js";
+import authService from "../service/auth/auth_service.js";
+import userService from "../service/user/user_service.js";
 import { validate } from "../validation/validation.js";
 
 const register = async (req, res, next) => {
     try {
-        const result = await userService.register(req.body);
+        const result = await authService.register(req.body);
 
         res.status(200).json({
             data: result
@@ -15,7 +16,7 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
     try {
-        const result = await userService.login(req.body);
+        const result = await authService.login(req.body);
 
         res.status(200).json({
             message: result.message,
@@ -33,7 +34,7 @@ const login = async (req, res, next) => {
 const refresh = async (req, res, next) => {
     try {
 
-        const result = await userService.refresh(req.body);
+        const result = await authService.refresh(req.body);
 
         return res.status(200).json({
             message: result.message,
@@ -79,13 +80,12 @@ const update = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
     try {
-
-        await userService.logout(req.body.refreshToken);
+        const result = await userService.logout(req.body, req.user.id);
 
         res.status(200).json({
-            data: "ok"
+            message: result.message
         });
-        
+
     } catch (e) {
         next(e);
     }
