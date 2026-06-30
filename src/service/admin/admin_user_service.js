@@ -1,6 +1,6 @@
 import { ResponseError } from "../../error/response_error.js";
 import { validate } from "../../validation/validation.js";
-import { getUserValidation, updateUserValidation, refreshTokenValidation } from "../../validation/user_validation.js";
+import { getUserValidation, updateUserValidation, refreshTokenValidation, getAllUsersValidation } from "../../validation/user_validation.js";
 import { prismaClient } from "../../application/database.js";
 import bcrypt from 'bcrypt';
 
@@ -135,12 +135,118 @@ const logout = async (request, userId) => {
 }
 
 const getAllUsers = async (request) => {
-    const users = validate(getUserValidation, request);
 
-    const getAll = prismaClient.user.findMany({
+    const users = validate(getAllUsersValidation, request);
 
-    })
+    //1 ((page - 1) * size) = 0
+    //2 ((page - 1) * size) = 10
+    const skip = (users.page - 1) * users.size;
+    const filters = [];
+
+    const addFilter = (condition) => {
+        if (condition) {
+            filters.push(condition);
+        }
+    };
+
+    addFilter(users.name && {
+        name: {
+            contains: users.name
+        }
+    });
+
+    addFilter(users.username && {
+        username: {
+            contains: users.username
+        }
+    });
+
+    addFilter(users.email && {
+        email: {
+            contains: users.email
+        }
+    });
+
+    addFilter(users.role && {
+        role: users.role
+    });
+
+    if (users.isActive !== undefined) {
+        filters.push({
+            isActive: users.isActive
+        });
+    }
+
+    // const allUsers = await prismaClient.user.findMany({
+    //     where: {
+    //         AND: filters
+    //     },
+    //     take: users.size,
+    //     skip: skip
+
+    // });
+
+    const allUsers = await prismaClient.user.findMany({
+        where: {
+            AND: filters
+        },
+        select: {
+            id: true,
+            name: true,
+            username: true,
+            email: true,
+            role: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true
+        },
+        orderBy: {
+            createdAt: "desc"
+        },
+        take: users.size,
+        skip
+    });
+
+    const totalItem = await prismaClient.user.count({
+        where: {
+            AND: filters
+        }
+    });
+
+    return {
+        contacts: allUsers,
+        paging: {
+            page: users.page,
+            total_item: totalItem,
+            total_page: Math.ceil(totalItem / users.size),
+        }
+    }
 }
+
+const getUserById = async (userId) => {
+    const id = validate(getUserValidation, userId);
+    const user = await prismaClient.user.findUnique({
+        where: {
+            id: id,
+        },
+
+        select: {
+            id: true,
+            username: true,
+            name: true,
+            email: true,
+            role: true
+        }
+    })
+
+    if (!user) {
+        throw new ResponseError(404, "contact not found");
+    }
+
+    return user;
+}
+
+
 
 
 // GET    /api/admin/users
@@ -202,4 +308,4 @@ const getAllUsers = async (request) => {
 
 // }
 
-export default { get, update, logout };
+export default { get, update, logout, getAllUsers, getUserById };

@@ -12,7 +12,7 @@ const loginValidation = z.object({
     password: z.string().min(8).max(100),
 });
 
-const getUserValidation = z.number().int().positive();
+const getUserValidation = z.coerce.number().int().positive();
 
 const updateUserValidation = z.object({
     email: z.string().email().optional(),
@@ -25,4 +25,14 @@ const refreshTokenValidation = z.object({
     refreshToken: z.string().min(1)
 });
 
-export { registerValidation, loginValidation, getUserValidation, updateUserValidation, refreshTokenValidation }
+const getAllUsersValidation = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    size: z.coerce.number().int().min(1).max(100).default(10),
+    name: z.string().max(100).optional(),
+    username: z.string().trim().max(100).optional(),
+    email: z.string().email().optional(),
+    role: z.enum(["ADMIN", "USER"]).optional(),
+    isActive: z.coerce.boolean().optional(),
+});
+
+export { registerValidation, loginValidation, getUserValidation, updateUserValidation, refreshTokenValidation, getAllUsersValidation }
