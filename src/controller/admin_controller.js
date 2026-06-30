@@ -83,4 +83,38 @@ const getUserById = async (req, res, next) => {
     }
 }
 
-export default { get, update, logout, getAllUsers, getUserById };
+const updateUserById = async (req, res, next) => {
+    try {
+
+        const userId = req.params.userId;
+
+        const result = await adminUserService.updateUserById(userId, req.body);
+
+        res.status(200).json({
+            message: "User updated successfully",
+            data: result
+        })
+
+    } catch (e) {
+        next(e);
+    }
+}
+
+const deleteUserById = async (req, res, next) => {
+    try {
+
+        const userId = req.params.userId;
+        const currentUserId = req.user.id;
+
+        const result = await adminUserService.deleteUserById(currentUserId, userId);
+
+        res.status(200).json({
+            message: "User deleted successfully"
+        })
+
+    } catch (e) {
+        next(e);
+    }
+}
+
+export default { get, update, logout, getAllUsers, getUserById, updateUserById, deleteUserById };

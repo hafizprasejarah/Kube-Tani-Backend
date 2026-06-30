@@ -27,7 +27,8 @@ userRouter.patch("/api/admin/current", roleMiddleware("ADMIN"), adminController.
 userRouter.delete("/api/admin/logout", roleMiddleware("ADMIN"), adminController.logout);
 userRouter.get("/api/admin/users", roleMiddleware("ADMIN"), adminController.getAllUsers);
 userRouter.get("/api/admin/users/:userId", roleMiddleware("ADMIN"), adminController.getUserById);
-// userRouter.patch("/api/admin/users/:id", roleMiddleware("ADMIN"), adminController.updateUser);
+userRouter.patch("/api/admin/users/:userId", roleMiddleware("ADMIN"), adminController.updateUserById);
+userRouter.delete("/api/admin/users/:userId", roleMiddleware("ADMIN"), adminController.deleteUserById);
 
 export {
     userRouter

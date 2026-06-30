@@ -35,4 +35,13 @@ const getAllUsersValidation = z.object({
     isActive: z.coerce.boolean().optional(),
 });
 
-export { registerValidation, loginValidation, getUserValidation, updateUserValidation, refreshTokenValidation, getAllUsersValidation }
+const updateUserByIdValidation = z.object({
+    email: z.string().email().optional(),
+    role: z.enum(["ADMIN", "USER"]).optional(),
+    username: z.string().min(2).max(100).optional(),
+    password: z.string().min(8).optional(),
+    name: z.string().min(2).max(100).optional(),
+});
+
+
+export { registerValidation, loginValidation, getUserValidation, updateUserValidation, refreshTokenValidation, getAllUsersValidation, updateUserByIdValidation }

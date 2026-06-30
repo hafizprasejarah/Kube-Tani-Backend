@@ -1,6 +1,12 @@
 import { ResponseError } from "../../error/response_error.js";
 import { validate } from "../../validation/validation.js";
-import { getUserValidation, updateUserValidation, refreshTokenValidation, getAllUsersValidation } from "../../validation/user_validation.js";
+import {
+    getUserValidation,
+    updateUserValidation,
+    refreshTokenValidation,
+    getAllUsersValidation,
+    updateUserByIdValidation
+} from "../../validation/user_validation.js";
 import { prismaClient } from "../../application/database.js";
 import bcrypt from 'bcrypt';
 
@@ -225,6 +231,7 @@ const getAllUsers = async (request) => {
 
 const getUserById = async (userId) => {
     const id = validate(getUserValidation, userId);
+
     const user = await prismaClient.user.findUnique({
         where: {
             id: id,
@@ -246,8 +253,122 @@ const getUserById = async (userId) => {
     return user;
 }
 
+const updateUserById = async (userId, request) => {
+    userId = validate(getUserValidation, userId);
+    const updateUser = validate(updateUserByIdValidation, request);
+
+    const existUsers = await prismaClient.user.findUnique({
+        where: {
+            id: userId
+        }
+    });
+
+    if (!existUsers) {
+        throw new ResponseError(404, "User not found");
+    }
+
+    const data = {};
+
+    if (updateUser.name) {
+        data.name = updateUser.name;
+    }
+
+    if (updateUser.username) {
+
+        const existUsername = await prismaClient.user.findFirst({
+            where: {
+                username: updateUser.username,
+                NOT: {
+                    id: userId
+                }
+            }
+        })
+
+        if (existUsername) {
+            throw new ResponseError(400, "username already exists");
+        }
+
+        data.username = updateUser.username;
+    }
 
 
+    if (updateUser.email) {
+
+        const existemail = await prismaClient.user.findFirst({
+            where: {
+                email: updateUser.email,
+                NOT: {
+                    id: userId
+                }
+            }
+        })
+
+        if (existemail) {
+            throw new ResponseError(400, "email already exists");
+        }
+
+        data.email = updateUser.email;
+    }
+
+    if (updateUser.password) {
+        data.password = await bcrypt.hash(updateUser.password, 10);
+    }
+
+    if (updateUser.role) {
+        data.role = updateUser.role;
+    }
+
+    if (Object.keys(data).length === 0) {
+        throw new ResponseError(400, "No data to update");
+    }
+
+    return await prismaClient.user.update({
+        where: {
+            id: userId
+        },
+        data: data,
+        select: {
+            username: true,
+            name: true,
+            email: true,
+            role: true
+        }
+    });
+}
+
+
+const deleteUserById = async (currentUser, userId) => {
+    userId = validate(getUserValidation, userId);
+
+    if (currentUser === userId) {
+        throw new ResponseError(400, "You cannot delete your own account");
+    }
+
+
+    const user = await prismaClient.user.findUnique({
+        where: {
+            id: userId
+        }
+    });
+
+    if (!user) {
+        throw new ResponseError(404, "User not found");
+    }
+
+    await prismaClient.$transaction([
+        prismaClient.refreshToken.deleteMany({
+            where: {
+                userId
+            }
+        }),
+        prismaClient.user.delete({
+            where: {
+                id: userId
+            }
+        })
+    ]);
+    
+};
 
 // GET    /api/admin/users
 // GET    /api/admin/users/:id
@@ -308,4 +429,4 @@ const getUserById = async (userId) => {
 
 // }
 
-export default { get, update, logout, getAllUsers, getUserById };
+export default { get, update, logout, getAllUsers, getUserById, updateUserById };

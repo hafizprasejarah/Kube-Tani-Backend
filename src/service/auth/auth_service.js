@@ -166,5 +166,4 @@ const refresh = async (request) => {
     };
 }
 
-
 export default { register, login, refresh };
