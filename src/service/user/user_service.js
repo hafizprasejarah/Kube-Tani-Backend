@@ -137,8 +137,4 @@ const logout = async (request, userId) => {
 }
 
 
-// const comment : async(params) {
-// }
-
-
 export default { get, update, logout };

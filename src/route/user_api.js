@@ -1,5 +1,6 @@
 import express from 'express';
 import userController from '../controller/user_controller.js';
+import messageController from '../controller/user_message_controller.js';
 import adminController from '../controller/admin_controller.js';
 import { authMiddleware } from '../middleware/auth_middleware.js';
 import { roleMiddleware } from "../middleware/role_middleware.js";
@@ -15,9 +16,7 @@ userRouter.get("/api/users/current", roleMiddleware("USER"), userController.get)
 userRouter.patch("/api/users/current", roleMiddleware("USER"), userController.update);
 userRouter.delete("/api/users/logout", roleMiddleware("USER"), userController.logout);
 
-userRouter.post('/api/users/message', roleMiddleware('USER'), userController.message);
-
-
+userRouter.post('/api/users/message', roleMiddleware('USER'), messageController.create);
 // =====================//
 //        ADMIN         //
 // =====================//
@@ -33,6 +32,9 @@ userRouter.delete("/api/admin/users/:userId", roleMiddleware("ADMIN"), adminCont
 userRouter.patch("/api/admin/users/:userId/activate", roleMiddleware("ADMIN"), adminController.activateUser);
 userRouter.patch("/api/admin/users/:userId/deactivate", roleMiddleware("ADMIN"), adminController.deactivateUser);
 
+userRouter.get('/api/admin/messages', roleMiddleware('ADMIN'), messageController.getAllMessages);
+userRouter.get('/api/admin/messages/:messageId', roleMiddleware('ADMIN'), messageController.getMessageById);
+userRouter.delete('/api/admin/messages/:messageId', roleMiddleware('ADMIN'), messageController.deleteMessageById);
 
 export {
     userRouter
