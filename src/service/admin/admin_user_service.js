@@ -244,7 +244,7 @@ const getUserById = async (userId) => {
     return user;
 }
 
-const updateUserById = async (currentUserId, userId, request) => {
+const updateUserById = async (currentUser, userId, request) => {
     const validatedUserId = validate(getUserValidation, userId);
     const updateUser = validate(updateUserByIdValidation, request);
 
@@ -470,4 +470,4 @@ const deactivateUser = async (currentUserId, userId) => {
 
 
 
-export default { get, update, logout, getAllUsers, getUserById, updateUserById, activateUser, deactivateUser };
+export default { get, update, logout, getAllUsers, getUserById, updateUserById, deleteUserById, activateUser, deactivateUser };

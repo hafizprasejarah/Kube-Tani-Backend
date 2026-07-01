@@ -14,7 +14,8 @@ userRouter.use(authMiddleware);
 userRouter.get("/api/users/current", roleMiddleware("USER"), userController.get);
 userRouter.patch("/api/users/current", roleMiddleware("USER"), userController.update);
 userRouter.delete("/api/users/logout", roleMiddleware("USER"), userController.logout);
-// userRouter.post('/api/users/comment', roleMiddleware('USER'), userController.comment);
+
+userRouter.post('/api/users/message', roleMiddleware('USER'), userController.message);
 
 
 // =====================//
@@ -29,8 +30,8 @@ userRouter.get("/api/admin/users", roleMiddleware("ADMIN"), adminController.getA
 userRouter.get("/api/admin/users/:userId", roleMiddleware("ADMIN"), adminController.getUserById);
 userRouter.patch("/api/admin/users/:userId", roleMiddleware("ADMIN"), adminController.updateUserById);
 userRouter.delete("/api/admin/users/:userId", roleMiddleware("ADMIN"), adminController.deleteUserById);
-userRouter.delete("/api/admin/users/:userId/activate", roleMiddleware("ADMIN"), adminController.activateUser);
-userRouter.delete("/api/admin/users/:userId/deactivate", roleMiddleware("ADMIN"), adminController.deactivateUser);
+userRouter.patch("/api/admin/users/:userId/activate", roleMiddleware("ADMIN"), adminController.activateUser);
+userRouter.patch("/api/admin/users/:userId/deactivate", roleMiddleware("ADMIN"), adminController.deactivateUser);
 
 
 export {

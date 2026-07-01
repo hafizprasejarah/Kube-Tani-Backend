@@ -70,7 +70,6 @@ const getUserById = async (req, res, next) => {
     try {
 
         const userId = req.params.userId;
-
         const result = await adminUserService.getUserById(userId);
 
         res.status(200).json({
