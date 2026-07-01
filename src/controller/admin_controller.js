@@ -1,4 +1,3 @@
-
 import adminUserService from "../service/admin/admin_user_service.js";
 
 const get = async (req, res, next) => {
@@ -45,7 +44,7 @@ const logout = async (req, res, next) => {
 
 const getAllUsers = async (req, res, next) => {
     try {
-        const user = req.user;
+
         const request = {
             name: req.query.name,
             username: req.query.username,
@@ -87,8 +86,8 @@ const updateUserById = async (req, res, next) => {
     try {
 
         const userId = req.params.userId;
-
-        const result = await adminUserService.updateUserById(userId, req.body);
+        const currentUser = req.user;
+        const result = await adminUserService.updateUserById(currentUser, userId, req.body);
 
         res.status(200).json({
             message: "User updated successfully",
@@ -117,4 +116,37 @@ const deleteUserById = async (req, res, next) => {
     }
 }
 
-export default { get, update, logout, getAllUsers, getUserById, updateUserById, deleteUserById };
+
+const activateUser = async (req, res, next) => {
+    try {
+        const currentUserId = req.user.id
+        const userId = req.params.userId;
+
+        const result = await adminUserService.activateUser(currentUserId, userId);
+
+        res.status(200).json({
+            data: result
+        })
+
+    } catch (e) {
+        next(e);
+    }
+}
+
+const deactivateUser = async (req, res, next) => {
+    try {
+        const currentUserId = req.user.id
+        const userId = req.params.userId;
+
+        const result = await adminUserService.deactivateUser(currentUserId, userId);
+
+        res.status(200).json({
+            data: result
+        })
+
+    } catch (e) {
+        next(e);
+    }
+}
+
+export default { get, update, logout, getAllUsers, getUserById, updateUserById, deleteUserById, activateUser, deactivateUser };

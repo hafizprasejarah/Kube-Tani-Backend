@@ -183,15 +183,6 @@ const getAllUsers = async (request) => {
         });
     }
 
-    // const allUsers = await prismaClient.user.findMany({
-    //     where: {
-    //         AND: filters
-    //     },
-    //     take: users.size,
-    //     skip: skip
-
-    // });
-
     const allUsers = await prismaClient.user.findMany({
         where: {
             AND: filters
@@ -253,13 +244,13 @@ const getUserById = async (userId) => {
     return user;
 }
 
-const updateUserById = async (userId, request) => {
-    userId = validate(getUserValidation, userId);
+const updateUserById = async (currentUserId, userId, request) => {
+    const validatedUserId = validate(getUserValidation, userId);
     const updateUser = validate(updateUserByIdValidation, request);
 
     const existUsers = await prismaClient.user.findUnique({
         where: {
-            id: userId
+            id: validatedUserId
         }
     });
 
@@ -279,7 +270,7 @@ const updateUserById = async (userId, request) => {
             where: {
                 username: updateUser.username,
                 NOT: {
-                    id: userId
+                    id: validatedUserId
                 }
             }
         })
@@ -298,7 +289,7 @@ const updateUserById = async (userId, request) => {
             where: {
                 email: updateUser.email,
                 NOT: {
-                    id: userId
+                    id: validatedUserId
                 }
             }
         })
@@ -314,8 +305,35 @@ const updateUserById = async (userId, request) => {
         data.password = await bcrypt.hash(updateUser.password, 10);
     }
 
-    if (updateUser.role) {
+
+
+    if (updateUser.role && updateUser.role !== currentUser.role) {
+
+
+        if (currentUser.role === "ADMIN" && updateUser.role === "USER") {
+
+            const totalAdmin = await prismaClient.user.count({
+                where: {
+                    role: "ADMIN"
+                }
+            });
+
+            if (totalAdmin <= 1) {
+                throw new ResponseError(
+                    400,
+                    "Cannot remove the last administrator."
+                );
+            }
+        }
+
         data.role = updateUser.role;
+    }
+
+    if (currentUser.id === validatedUserId && updateUser.role) {
+        throw new ResponseError(
+            400,
+            "You cannot change your own role."
+        );
     }
 
     if (Object.keys(data).length === 0) {
@@ -324,7 +342,7 @@ const updateUserById = async (userId, request) => {
 
     return await prismaClient.user.update({
         where: {
-            id: userId
+            id: validatedUserId
         },
         data: data,
         select: {
@@ -336,18 +354,17 @@ const updateUserById = async (userId, request) => {
     });
 }
 
-
 const deleteUserById = async (currentUser, userId) => {
-    userId = validate(getUserValidation, userId);
+    const validatedUserId = validate(getUserValidation, userId);
 
-    if (currentUser === userId) {
+    if (currentUser === validatedUserId) {
         throw new ResponseError(400, "You cannot delete your own account");
     }
 
 
     const user = await prismaClient.user.findUnique({
         where: {
-            id: userId
+            id: validatedUserId
         }
     });
 
@@ -355,78 +372,102 @@ const deleteUserById = async (currentUser, userId) => {
         throw new ResponseError(404, "User not found");
     }
 
+
     await prismaClient.$transaction([
         prismaClient.refreshToken.deleteMany({
             where: {
-                userId
+                userId: validatedUserId
             }
         }),
         prismaClient.user.delete({
             where: {
-                id: userId
+                id: validatedUserId
             }
         })
     ]);
-    
+
 };
 
-// GET    /api/admin/users
-// GET    /api/admin/users/:id
-// PATCH  /api/admin/users/:id
-// DELETE /api/admin/users/:id
-// PATCH  /api/admin/users/:id/activate
-// PATCH  /api/admin/users/:id/deactivate
+const activateUser = async (currentUserId, userId) => {
+    const validatedUserId = validate(getUserValidation, userId);
 
-// atau
+    const user = await prismaClient.user.findUnique({
+        where: {
+            id: validatedUserId
+        }
+    });
 
-// ├── GET /admin/users
-// ├── GET /admin/users/:id
-// ├── PATCH /admin/users/:id
-// ├── DELETE /admin/users/:id
-// ├── PATCH /admin/users/:id/role
-// └── PATCH /admin/users/:id/status
+    if (!user) {
+        throw new ResponseError(404, "User not found");
+    }
 
-// getAllUsers()
-// getUserById()
-// updateUser()
-// deleteUser()
-// activateUser()
-// deactivateUser()
+    if (currentUserId === validatedUserId) {
+        throw new ResponseError(400, "You cannot deactivate your own account");
+    }
 
-// getAll()
+    if (user.isActive) {
+        throw new ResponseError(400, "User is already active");
+    }
 
-// getById(id)
+    return await prismaClient.user.update({
+        where: {
+            id: validatedUserId
+        },
+        data: {
+            isActive: true
+        },
+        select: {
+            id: true,
+            username: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true
+        }
+    });
+}
 
-// updateUser(id, request)
+const deactivateUser = async (currentUserId, userId) => {
+    const validatedUserId = validate(getUserValidation, userId);
 
-// deleteUser(id)
+    const user = await prismaClient.user.findUnique({
+        where: {
+            id: validatedUserId
+        }
+    });
 
-// changeRole(id)
+    if (!user) {
+        throw new ResponseError(404, "User not found");
+    }
 
-// changeStatus(id)
 
-// const getAllUsers = async () => {
+    if (currentUserId === validatedUserId) {
+        throw new ResponseError(400, "You cannot deactivate your own account");
+    }
 
-// }
+    if (!user.isActive) {
+        throw new ResponseError(400, "User is already active");
+    }
 
-// const getUserById = async (id) => {
 
-// }
+    return await prismaClient.user.update({
+        where: {
+            id: validatedUserId
+        },
+        data: {
+            isActive: false
+        },
+        select: {
+            id: true,
+            username: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true
+        }
+    });
+}
 
-// const updateUser = async (id, request) => {
 
-// }
 
-// const deleteUser = async (id) => {
-
-// }
-
-// const changeRole = async (id, request) => {
-
-// }
-
-// const changeStatus = async (id, request) => {
-
-// }
-
-export default { get, update, logout, getAllUsers, getUserById, updateUserById };
+export default { get, update, logout, getAllUsers, getUserById, updateUserById, activateUser, deactivateUser };
