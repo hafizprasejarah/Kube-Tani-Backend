@@ -70,6 +70,8 @@ model Message {
   id        Int             @id @default(autoincrement())
   subject   String
   category  MessageCategory
+  contactEmail String
+  contactPhone String
   message   String          @db.Text
   status    MessageStatus   @default(PENDING)
   createdAt DateTime        @default(now())

@@ -8,18 +8,35 @@ const create = async (currentUser, request) => {
     const userId = validate(getUserValidation, currentUser);
     const message = validate(createMessageValidation, request);
 
+    const user = await prismaClient.user.findUnique({
+        where: {
+            id: userId
+        },
+        select: {
+            email: true
+        }
+    });
+
+    if (!user) {
+        throw new ResponseError(404, "User not found");
+    }
+
     const createdMessage = await prismaClient.message.create({
         data: {
             subject: message.subject,
             category: message.category,
             message: message.message,
-            userId: userId
+            contactEmail: user.email,
+            contactPhone: message.contactPhone,
+            userId : userId
         },
         select: {
             id: true,
             subject: true,
             category: true,
             message: true,
+            contactEmail: true,
+            contactPhone: true,
             status: true,
             createdAt: true
         }
@@ -40,6 +57,8 @@ const get = async (currentUser) => {
             subject: true,
             category: true,
             message: true,
+            contactEmail: true,
+            contactPhone: true,
             status: true,
             createdAt: true
         }
