@@ -1,10 +1,19 @@
 import * as z from "zod";
 
-const createValidation = z.object({
-    email: z.string().email(),
-    username: z.string().min(2).max(100),
-    password: z.string().min(8),
-    name: z.string().min(2).max(100),
+const getUserValidation = z.coerce.number().int().positive();
+
+const createMessageValidation = z.object({
+    subject: z.string().min(3).max(100),
+    
+    category: z.enum([
+        "PRODUCT",
+        "PARTNERSHIP",
+        "COMPLAINT",
+        "SUGGESTION",
+        "OTHER"
+    ]),
+
+    message: z.string().min(10).max(5000)
 });
 
-export {createValidation}
+export { createMessageValidation, getUserValidation }

@@ -16,7 +16,9 @@ userRouter.get("/api/users/current", roleMiddleware("USER"), userController.get)
 userRouter.patch("/api/users/current", roleMiddleware("USER"), userController.update);
 userRouter.delete("/api/users/logout", roleMiddleware("USER"), userController.logout);
 
-userRouter.post('/api/users/message', roleMiddleware('USER'), messageController.create);
+userRouter.post('/api/messages', roleMiddleware('USER'), messageController.create);
+userRouter.get('/api/messages', roleMiddleware('USER'), messageController.get);
+
 // =====================//
 //        ADMIN         //
 // =====================//
@@ -33,8 +35,8 @@ userRouter.patch("/api/admin/users/:userId/activate", roleMiddleware("ADMIN"), a
 userRouter.patch("/api/admin/users/:userId/deactivate", roleMiddleware("ADMIN"), adminController.deactivateUser);
 
 userRouter.get('/api/admin/messages', roleMiddleware('ADMIN'), messageController.getAllMessages);
-userRouter.get('/api/admin/messages/:messageId', roleMiddleware('ADMIN'), messageController.getMessageById);
-userRouter.delete('/api/admin/messages/:messageId', roleMiddleware('ADMIN'), messageController.deleteMessageById);
+// userRouter.get('/api/admin/messages/:messageId', roleMiddleware('ADMIN'), messageController.getMessageById);
+// userRouter.delete('/api/admin/messages/:messageId', roleMiddleware('ADMIN'), messageController.deleteMessageById);
 
 export {
     userRouter
